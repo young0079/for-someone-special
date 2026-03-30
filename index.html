@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Special Surprise...</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0d1117;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; 
+            color: white;
+            position: relative; 
+        }
+
+        /* --- Sky Container (Stars & Moons) --- */
+        #sky-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; 
+            pointer-events: none;
+        }
+
+        .sky-item {
+            position: absolute;
+            user-select: none;
+            opacity: 0.6; 
+            will-change: transform, opacity;
+        }
+
+        @keyframes fallDown {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- Floating Hearts Container --- */
+        #heart-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; 
+            pointer-events: none; 
+        }
+
+        .heart {
+            position: absolute;
+            color: rgba(255, 126, 95, 0.4); 
+            font-size: 20px;
+            user-select: none;
+            will-change: transform, opacity; 
+        }
+
+        @keyframes floatDiagonal {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translate(120vw, -120vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- Barbie Animations --- */
+        .barbie-wrapper {
+            position: fixed;
+            bottom: 8%; 
+            width: 200px; 
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            z-index: 25; 
+            transition: all 2s cubic-bezier(0.25, 1, 0.5, 1); 
+        }
+
+        .barbie-left { left: -300px; }
+        .barbie-right { right: -300px; }
+
+        .slide-in-left { left: 15% !important; }
+        .slide-in-right { right: 15% !important; }
+
+        .barbie-doll {
+            font-size: 150px; 
+            line-height: 1; 
+            transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
+            filter: drop-shadow(0px 0px 15px rgba(255, 20, 147, 0.8));
+            user-select: none;
+        }
+
+        .spin-360 {
+            transform: rotate(360deg);
+        }
+
+        /* --- Text Effects & Highlights --- */
+        .shimmer-text {
+            background: linear-gradient(90deg, #ff7e5f, #feb47b, #fff, #ff7e5f);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .glow-pink {
+            color: #ff69b4;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.8), 0 0 20px rgba(255, 105, 180, 0.4);
+            font-weight: 700;
+        }
+
+        .glow-gold {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.4);
+            font-weight: 700;
+        }
+
+        .glow-green {
+            color: #7ee787;
+            text-shadow: 0 0 10px rgba(126, 231, 135, 0.8), 0 0 20px rgba(126, 231, 135, 0.4);
+            font-weight: 700;
+        }
+
+        /* Main Gift Styles */
+        #main-gift-container {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 10; 
+        }
+
+        #main-gift-container:hover {
+            transform: scale(1.1);
+        }
+
+        .gift-icon {
+            font-size: 100px;
+            animation: float 3s ease-in-out infinite;
+            user-select: none;
+        }
+
+        .tap-text {
+            margin-top: 15px;
+            font-size: 1.2em;
+            color: #8b949e;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Main Message Styles */
+        #message-container {
+            display: none;
+            text-align: center;
+            opacity: 0;
+            z-index: 5; 
+            position: relative;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            margin-top: 0;
+            text-shadow: 0px 0px 20px rgba(255, 126, 95, 0.4);
+        }
+
+        p {
+            font-size: 1.3em;
+            line-height: 1.6;
+            color: #c9d1d9;
+            max-width: 500px;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+
+        /* Side Surprises Styles */
+        #side-surprises {
+            display: none; 
+            opacity: 0;
+            z-index: 20; 
+        }
+
+        .surprise-wrapper.left-edge {
+            position: fixed;
+            left: 15%; 
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 200px; 
+        }
+
+        .surprise-wrapper.right-edge {
+            position: fixed;
+            right: 15%; 
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 200px; 
+        }
+
+        .side-gift {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .side-gift:hover {
+            transform: scale(1.15);
+        }
+
+        .side-gift .gift-icon {
+            font-size: 60px;
+            animation: float 2.5s ease-in-out infinite;
+        }
+
+        .side-gift .tap-text {
+            font-size: 1em; 
+        }
+
+        .side-message {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            width: 200px; 
+        }
+
+        .side-message h3 {
+            margin-top: 0;
+            color: #58a6ff;
+            font-size: 1.3em; 
+            margin-bottom: 8px;
+        }
+
+        .side-message p {
+            font-size: 1.1em; 
+            margin: 0;
+            padding: 0;
+            line-height: 1.4; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sky-container"></div>
+    <div id="heart-container"></div>
+
+    <div id="barbie-left" class="barbie-wrapper barbie-left">
+        <div class="barbie-doll">💃🏼</div>
+    </div>
+    
+    <div id="barbie-right" class="barbie-wrapper barbie-right">
+        <div class="barbie-doll"><span style="display: inline-block; transform: scaleX(-1);">💃🏼</span></div>
+    </div>
+
+    <div id="ytplayer" style="display: none; position: absolute; width: 0; height: 0; z-index: -100;"></div>
+
+    <div id="main-gift-container" onclick="revealMainSurprise()">
+        <div class="gift-icon">🎁</div>
+        <div class="tap-text">Tap to open</div>
+    </div>
+
+    <div id="message-container">
+        <h1 class="shimmer-text">💝To My Love!!💝</h1>
+        <p>To my absolute <span class="glow-pink">best friend forever</span>❤️❤️. Thank you for always being there🫂💗💓. Creating <span class="glow-gold">crazy memories</span>💫, <span class="glow-gold">endless laughs</span>😹, and absolute <span class="glow-gold">big wins</span>🚀. Have the greatest days forever!🫂💖💖💓❤️</p>
+    </div>
+
+    <div id="side-surprises">
+        <div class="surprise-wrapper left-edge">
+            <div id="left-gift" class="side-gift" onclick="openSideGift('left')">
+                <div class="gift-icon">🎁</div>
+                <div class="tap-text">Open me next!</div>
+            </div>
+            <div id="left-message" class="side-message">
+                <h3>For the Moments💖</h3>
+                <p>Remember all our <span class="glow-pink">special moments</span>? We're gonna make a <span class="glow-gold">hundred more</span> this year🤭🙌❤️!</p>
+            </div>
+        </div>
+
+        <div class="surprise-wrapper right-edge">
+            <div id="right-gift" class="side-gift" onclick="openSideGift('right')">
+                <div class="gift-icon">🎁</div>
+                <div class="tap-text">And me!</div>
+            </div>
+            <div id="right-message" class="side-message">
+                <h3 class="shimmer-text">For the Future 🚀</h3>
+                <p>I know you are going to <span class="glow-green">achieve all your goals</span> and I'll be <span class="glow-gold">cheering you on</span> all of these 😉❤️!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var ytPlayer;
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('ytplayer', {
+                height: '0',
+                width: '0',
+                videoId: '7KmG9d2NVJY', // New Song ID
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'playsinline': 1,
+                    'rel': 0
+                }
+            });
+        }
+
+        function createHeart() {
+            const container = document.getElementById('heart-container');
+            if (!container) return;
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerText = '❤️';
+            if (Math.random() > 0.5) {
+                heart.style.left = '-50px';
+                heart.style.bottom = (Math.random() * 100) + 'vh';
+            } else {
+                heart.style.left = (Math.random() * 100) + 'vw';
+                heart.style.bottom = '-50px';
+            }
+            const size = Math.random() * 20 + 15;
+            heart.style.fontSize = size + 'px';
+            const duration = Math.random() * 8 + 6;
+            heart.style.animation = `floatDiagonal ${duration}s linear forwards`;
+            container.appendChild(heart);
+            setTimeout(() => { heart.remove(); }, duration * 1000);
+        }
+
+        createHeart();
+        setInterval(createHeart, 100);
+
+        function createSkyObject() {
+            const container = document.getElementById('sky-container');
+            if (!container) return;
+            const skyObj = document.createElement('div');
+            skyObj.classList.add('sky-item');
+            const emojis = ['⭐', '🌙', '✨'];
+            skyObj.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            skyObj.style.left = (Math.random() * 100) + 'vw';
+            skyObj.style.top = '-50px';
+            const size = Math.random() * 15 + 15;
+            skyObj.style.fontSize = size + 'px';
+            const duration = Math.random() * 5 + 6;
+            skyObj.style.animation = `fallDown ${duration}s linear forwards`;
+            container.appendChild(skyObj);
+            setTimeout(() => { skyObj.remove(); }, duration * 1000);
+        }
+
+        function revealMainSurprise() {
+            if (ytPlayer && typeof ytPlayer.playVideo === 'function') {
+                ytPlayer.playVideo();
+            }
+
+            document.getElementById('main-gift-container').style.display = 'none';
+            const messageBox = document.getElementById('message-container');
+            messageBox.style.display = 'block';
+            
+            setTimeout(() => {
+                messageBox.style.transition = 'opacity 1.5s ease-in';
+                messageBox.style.opacity = '1';
+            }, 50);
+
+            createSkyObject();
+            setInterval(createSkyObject, 250); 
+
+            confetti({
+                particleCount: 200,
+                spread: 160,
+                origin: { y: 0.6 },
+                startVelocity: 50,
+                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#ffffff']
+            });
+
+            var duration = 6000; 
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 12, 
+                    angle: 60,
+                    spread: 80, 
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff']
+                });
+                confetti({
+                    particleCount: 12, 
+                    angle: 120,
+                    spread: 80, 
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff']
+                });
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+
+            setTimeout(() => {
+                const sideSurprises = document.getElementById('side-surprises');
+                sideSurprises.style.display = 'block'; 
+                setTimeout(() => {
+                    sideSurprises.style.transition = 'opacity 1s ease';
+                    sideSurprises.style.opacity = '1';
+                }, 50);
+            }, 2000);
+        }
+
+        function openSideGift(side) {
+            const gift = document.getElementById(side + '-gift');
+            const rect = gift.getBoundingClientRect();
+            const exactX = (rect.left + (rect.width / 2)) / window.innerWidth;
+            const exactY = (rect.top + (rect.height / 2)) / window.innerHeight;
+            gift.style.display = 'none';
+            var end = Date.now() + 1500;
+            var customColors = side === 'left' ? ['#ffffff', '#58a6ff'] : ['#ffffff', '#7ee787'];
+            (function frame() {
+                confetti({
+                    particleCount: 8,
+                    spread: 60,
+                    origin: { x: exactX, y: exactY }, 
+                    colors: customColors
+                });
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+            const msg = document.getElementById(side + '-message');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.opacity = '1';
+                msg.style.transform = 'translateY(0)';
+            }, 50);
+            const barbieWrapper = document.getElementById('barbie-' + side);
+            if (barbieWrapper) {
+                setTimeout(() => {
+                    barbieWrapper.classList.add('slide-in-' + side);
+                    barbieWrapper.querySelector('.barbie-doll').classList.add('spin-360');
+                }, 100); 
+            }
+        }
+    </script>
+</body>
+</html>
